@@ -94,6 +94,21 @@ contains
       call limb_darkening(rr2, ann_theta,ph)
     end if
 
+    ! Determine sector
+    if (ann_theta .le. 0.25*pi) then
+      ph%sec_idx = 2
+    else if ((ann_theta .gt. 0.25*pi) .and. (ann_theta .le. 0.75*pi)) then
+      ph%sec_idx = 1
+    else if ((ann_theta .gt. 0.75*pi) .and. (ann_theta .le. 1.00*pi)) then
+      ph%sec_idx = 2
+    else if ((ann_theta .gt. 1.00*pi) .and. (ann_theta .le. 1.25*pi)) then
+      ph%sec_idx = 3
+    else if ((ann_theta .gt. 1.25*pi) .and. (ann_theta .le. 1.75*pi)) then
+      ph%sec_idx = 4
+    else if (ann_theta .gt. 1.75*pi) then
+      ph%sec_idx = 3
+    end if
+
     ! Rotate illumination for planet at a phase not at 0
     ! rotate according to given viewing angle
     if (im_d%vphi /= 180.0_dp .and. do_trans_d .eqv. .True.) then

@@ -11,6 +11,7 @@ module mc_class_pac
     integer(8) :: id                          ! Photon number unique id
     integer(8) :: seed                        ! Unique random seed of packet
     integer :: p_flag                      ! Integer flag giving state of packet
+    integer :: sec_idx
     !type(curandStateXORWOW) :: iseed       ! the current iseed integer of the packet (changes each random call)
     integer :: ig
     type(curandStateMRG32k3a) :: iseed

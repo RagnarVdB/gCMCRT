@@ -81,7 +81,11 @@ contains
     call raytrace_sph_3D(ray)
 
     contri = ray%wght * (1.0_dp - exp(-ray%tau)) * ray%bp * H_d(1)
-    istat = atomicadd(T_trans_d(l),contri)
+    ! Contribution to full spectrum
+    istat = atomicadd(T_trans_d(1, l),contri)
+    ! Contribution to sector
+    istat = atomicadd(T_trans_d(ph%sec_idx+1, l),contri)
+    
 
     if (do_scat_loop_d .eqv. .True.) then
       ph%p_flag = 0
@@ -214,7 +218,7 @@ subroutine exp_3D_sph_atm_trans_hires()
   im_d = im
   grid_d = grid
 
-  allocate(T_trans(n_wl),T_trans_d(n_wl))
+  allocate(T_trans(5, n_wl),T_trans_d(5, n_wl))
 
   ! Grid for GPU threads/blocks
   threads = dim3(128,1,1)
@@ -276,8 +280,8 @@ subroutine exp_3D_sph_atm_trans_hires()
       nscat_tot = 0
       nscat_tot_d = nscat_tot
 
-      T_trans(l) = 0.0_dp
-      T_trans_d(l) = T_trans(l)
+      T_trans(:, l) = 0.0_dp
+      T_trans_d(:, l) = T_trans(:, l)
 
       l_d = l
       im_d = im
@@ -297,13 +301,13 @@ subroutine exp_3D_sph_atm_trans_hires()
       nscat_tot = nscat_tot_d
 
       ! Give T_trans_d back to CPU
-      T_trans(l) = T_trans_d(l)
+      T_trans(:, l) = T_trans_d(:, l)
 
-      T_trans(l) = (H(grid%n_lev) - H(1)) / real(Nph,dp) * T_trans(l)
-      write(uT(n),*) wl(l), T_trans(l)
+      T_trans(:, l) = (H(grid%n_lev) - H(1)) / real(Nph,dp) * T_trans(:, l)
+      write(uT(n),'(F18.15, 5E22.15)') wl(l), T_trans(:, l)
       !call flush(uT(n))
 
-      print*, n, l, wl(l), T_trans(l)
+      print*, n, l, wl(l), T_trans(1, l)
       print*, 'pscat failures and nscat_tot: ', im%fail_pscat, nscat_tot
 
     end do

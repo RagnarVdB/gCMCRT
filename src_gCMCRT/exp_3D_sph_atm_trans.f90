@@ -92,7 +92,7 @@ contains
     call raytrace_sph_3D(ray)
 
     contri = ray%wght * (1.0_dp - exp(-ray%tau)) * ray%bp * H_d(1)
-    istat = atomicadd(T_trans_d(l),contri)
+    istat = atomicadd(T_trans_d(:, l),contri)
 
     ! Do the contibution function for the binned b
     if (do_cf_d .eqv. .True.) then
@@ -219,7 +219,7 @@ subroutine exp_3D_sph_atm_transmission()
   im_d = im
   grid_d = grid
 
-  allocate(T_trans(n_wl),T_trans_d(n_wl))
+  allocate(T_trans(5, n_wl),T_trans_d(5, n_wl))
 
   ! Grid for GPU threads/blocks
   threads = dim3(128,1,1)
@@ -268,8 +268,8 @@ subroutine exp_3D_sph_atm_transmission()
       b_n_cf_d(:) = b_n_cf(:)
     end if
 
-    T_trans(l) = 0.0_dp
-    T_trans_d(l) = T_trans(l)
+    T_trans(:, l) = 0.0_dp
+    T_trans_d(:, l) = T_trans(:, l)
 
     l_d = l
     im_d = im
@@ -283,7 +283,7 @@ subroutine exp_3D_sph_atm_transmission()
     nscat_tot = nscat_tot_d
 
     ! Give T_trans_d back to CPU
-    T_trans(l) = T_trans_d(l)
+    T_trans(:, l) = T_trans_d(:, l)
 
     if (do_cf .eqv. .True.) then
       b_cf(:) = b_cf_d(:)
@@ -297,11 +297,11 @@ subroutine exp_3D_sph_atm_transmission()
       b_n_cf(:) = 0
     end if
 
-    T_trans(l) = (H(grid%n_lev) - H(1)) / real(Nph,dp) * T_trans(l)
-    write(uT,*) wl(l), T_trans(l)
+    T_trans(:, l) = (H(grid%n_lev) - H(1)) / real(Nph,dp) * T_trans(:, l)
+    write(uT,*) wl(l), T_trans(:, l)
     call flush(uT)
 
-    print*, l, wl(l), T_trans(l)
+    print*, l, wl(l), T_trans(:, l)
     print*, 'pscat failures and nscat_tot: ', im%fail_pscat, nscat_tot
 
   end do
