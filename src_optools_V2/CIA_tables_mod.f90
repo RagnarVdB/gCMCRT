@@ -2,12 +2,14 @@ module CIA_tables_mod
   use optools_data_mod
   use optools_table_class
   use CIA_tables_read, only : read_CIA_tables
-  use CIA_tables_interp, only : interp_CIA_tables, interp_CIA_tables_Bezier
+  use CIA_tables_interp, only : interp_CIA_tables
+  use optools_aux, only : locate
   implicit none
 
   logical :: first_call = .True.
 
-  real(kind=dp), allocatable, dimension(:) :: CIA_out
+  real(kind=dp), allocatable, dimension(:,:) :: CIA_out
+  real(kind=dp), allocatable, dimension(:) :: CIA_work
   real(kind=sp), allocatable, dimension(:) :: CIA_write
 
   ! Namelist variables
@@ -27,11 +29,8 @@ contains
   subroutine calc_CIA_table()
     implicit none
 
-    integer :: s, i, j, l, z, ni
+    integer :: s, i, j, l, z, ni, dummy
     logical :: exists
-    real(kind=dp) :: CIA_work
-
-    CIA_work = 0.0_dp
 
     !Note, the order the array allocations is important
 
@@ -45,7 +44,9 @@ contains
     read(u_nml, nml=CIA_nml)
 
     ! Allocate work arrays
-    allocate(CIA_out(nlay),CIA_write(nlay))
+    allocate(CIA_out(nwl, nlay),CIA_write(nlay))
+    allocate(CIA_work(nwl))
+    allocate(iwns(nCIA, nwl))
 
     ! Give the classes some global data from par and namelists
     CIA_tab(:)%sp = CIA_name(:)
@@ -103,39 +104,34 @@ contains
     print*, ' ~~ Performing CIA interpolation and output ~~ '
     print*, ' ~~ Please wait... ~~ '
 
+    ! Precalculate indexes of required wavelengths in CIA tables:
+    do s = 1, nCIA
+      if (CIA_tab(s)%form == 4) then
+        do l = 1, nwl
+          call locate(CIA_tab(s)%wn(1,1:CIA_tab(s)%irec(1)),wn(l),iwns(s,l))
+        end do
+      end if
+    end do
+    
     !! Begin openMP loops
     !$omp parallel default (none), &
-    !$omp& private (l,z), &
-    !$omp& shared (nwl,nlay,CIA_out,RH_lay,wl), &
+    !$omp& private (z), &
+    !$omp& shared (nwl,nlay,CIA_out,RH_lay,wl, iwns), &
     !$omp& firstprivate(CIA_work)
-
+    
     ! Perform CIA table interpolation to
     ! Species loops are inside subroutines
-    do l = 1, nwl
-      !$omp single
-      if (mod(l,nwl/10) == 0) then
-        print*, l, wl(l), nwl
-      end if
-      !$omp end single
-      !$omp do schedule (dynamic)
-      do z = 1, nlay
-
-        ! Find the CIA opacity for this layer from tables
-        call interp_CIA_tables(l,z,CIA_work)
-        !call interp_CIA_tables_Bezier(l,z,CIA_work)
-        ! Convert interpolated result to cm2 g-1 of atmosphere and add to output array
-        CIA_out(z) = CIA_work/RH_lay(z)
-
-      end do
-      !$omp end do
-
-      !$omp single
-      ! Output CMCRT formatted CIA table for layers
-      call output_CIA_table(l)
-      !$omp end single
-
+    !$omp do schedule (dynamic)
+    do z = 1, nlay
+      ! Find the CIA opacity for this layer from tables
+      call interp_CIA_tables(z,CIA_work)
+      !call interp_CIA_tables_Bezier(l,z,CIA_work)
+      ! Convert interpolated result to cm2 g-1 of atmosphere and add to output array
+      CIA_out(:,z) = CIA_work/RH_lay(z)
     end do
+    !$omp end do
     !$omp end parallel
+    call output_CIA_table()
 
     !deallocate all allocated arrays
     deallocate(CIA_out,CIA_write)
@@ -373,24 +369,24 @@ contains
 
   end subroutine find_CIA_consituents
 
-  subroutine output_CIA_table(l)
+  subroutine output_CIA_table()
     implicit none
 
-    integer, intent(in) :: l
-    integer :: z,  reclen
+    integer :: z,  reclen, l
+    do l = 1, nwl
+      if (first_call .eqv. .True.) then
+        !print*, 'Outputing CIA.cmcrt'
+        inquire(iolength=reclen) CIA_write
+        ! Output k-table in 1D or flattened 3D CMCRT format k_CMCRT.ktb (single precision)
+        open(newunit=uCIA, file='CIA.cmcrt', action='readwrite', &
+        & form='unformatted',status='replace',access='direct',recl=reclen)
+        first_call = .False.
+      end if
 
-    if (first_call .eqv. .True.) then
-      !print*, 'Outputing CIA.cmcrt'
-      inquire(iolength=reclen) CIA_write
-      ! Output k-table in 1D or flattened 3D CMCRT format k_CMCRT.ktb (single precision)
-      open(newunit=uCIA, file='CIA.cmcrt', action='readwrite', &
-      & form='unformatted',status='replace',access='direct',recl=reclen)
-      first_call = .False.
-    end if
-
-    ! Convert to single precision on output, also care for underfloat
-    CIA_write(:) = real(max(CIA_out(:),1.0e-30_dp),kind=sp)
-    write(uCIA,rec=l) CIA_write
+      ! Convert to single precision on output, also care for underfloat
+      CIA_write(:) = real(max(CIA_out(l, :),1.0e-30_dp),kind=sp)
+      write(uCIA,rec=l) CIA_write
+    end do
 
   end subroutine output_CIA_table
 

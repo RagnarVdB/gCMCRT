@@ -1,10 +1,10 @@
 # Compiler settings
 #===================
-F90 = nvfortran
+F90 = gfortran
 F90LINKER = $(F90)
 
 # Default flags for release build
-FFLAGS = -mp -fast -O3
+FFLAGS = -O3 -fopenmp
 
 # Debug flags for debugging purposes
 DEBUG_FLAGS = -O0 -g -traceback

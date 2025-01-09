@@ -93,7 +93,7 @@ module optools_table_class
 
     integer :: nwl
     real(kind=dp), allocatable, dimension(:,:) :: wl ! Central wavelengths of table sets (um)
-    real(kind=dp), allocatable, dimension(:,:) :: wn ! Central wavenumbers of table sets (cm-1)
+    real(kind=dp), allocatable, dimension(:,:) :: wn, lwn ! Central wavenumbers of table sets (cm-1)
     real(kind=dp), allocatable, dimension(:,:) :: freq ! Central frequencies of table sets (Hz)
 
     real(kind=dp), allocatable, dimension(:) :: wn_s

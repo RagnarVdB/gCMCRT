@@ -155,7 +155,7 @@ contains
 
     read(u,*) nwl
 
-    allocate(iwl(nwl),wl(nwl),wl_cm(nwl),wl_A(nwl),wn(nwl),freq(nwl))
+    allocate(iwl(nwl),wl(nwl),wl_cm(nwl),wl_A(nwl),wn(nwl),lwn(nwl),freq(nwl))
 
     do l = 1, nwl
       ! Read in wavelengths [um]
@@ -166,6 +166,8 @@ contains
       wl_A(l) = wl(l) * 1.0e4_dp
       ! Convert to wavenumber [cm-1]
       wn(l) = 1.0_dp / wl_cm(l)
+      ! Convert to log wavenumber
+      lwn(l) = log10(wn(l))
       ! Convert to frequency [Hz]
       freq(l) = c_s * wn(l)
     end do
