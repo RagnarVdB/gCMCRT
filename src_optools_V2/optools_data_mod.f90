@@ -70,8 +70,9 @@ module optools_data_mod
   integer :: nwl
   integer, allocatable, dimension(:) :: iwl
   real(kind=dp), allocatable, dimension(:) :: wl, wl_cm, wl_A ! Wavelength [um, cm, A]
-  real(kind=dp), allocatable, dimension(:) :: wn ! Wavenumber [cm-1]
+  real(kind=dp), allocatable, dimension(:) :: wn, lwn ! Wavenumber [cm-1]
   real(kind=dp), allocatable, dimension(:) :: freq ! Frequency [Hz]
+  integer, allocatable, dimension(:,:) :: iwns
 
   !--------------- 1D grid arrays---------------------
   integer :: nlay, ngas, ndust, nmode

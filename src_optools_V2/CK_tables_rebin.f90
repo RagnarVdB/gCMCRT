@@ -59,8 +59,8 @@ contains
 
     print*, 'Outputting rebinned wavelength scale and changing optools wavelength grid'
     nwl = nwl - 2
-    deallocate(iwl,wl,wl_cm,wl_A,wn,freq)
-    allocate(iwl(nwl),wl(nwl),wl_cm(nwl),wl_A(nwl),wn(nwl),freq(nwl))
+    deallocate(iwl,wl,wl_cm,wl_A,wn, lwn, freq)
+    allocate(iwl(nwl),wl(nwl),wl_cm(nwl),wl_A(nwl),wn(nwl), lwn(nwl), freq(nwl))
 
 
     open(newunit=u,file='wavelengths_rebin.wl',action='readwrite',status='unknown',form='formatted')
