@@ -5,7 +5,7 @@ module optools_aux
   private
   public :: locate, sort2, gauss, &
     & linear_interp, linear_log_interp, bilinear_interp, bilinear_log_interp, &
-    & trapz, Bezier_interp
+    & trapz, Bezier_interp, Bezier_interp_prepared, prepare_linear, prepare_bezier
 
 contains
 
@@ -99,6 +99,62 @@ contains
 
   end subroutine bilinear_log_interp
 
+  subroutine prepare_bezier(xi, x, a)
+    implicit none
+
+    real(dp), dimension(3), intent(in) :: xi
+    real(dp), intent(in) :: x
+    real(kind=dp), intent(out), dimension(3) :: a
+
+    real(dp) :: t, b, c, w
+
+    
+    if (x > xi(1) .and. x < xi(2)) then
+      t = (x - xi(1)) / (xi(2) - xi(1))
+      c = 2.0_dp * t * (1.0_dp - t)
+      w = (xi(3) - xi(2)) / (xi(3) - xi(1))
+      b = (xi(2) - xi(1)) / (xi(3) - xi(2))
+      a(1) = (1.0_dp - t)**2 + c * w / 2.0_dp
+      a(2) = t**2 + c * (1.0_dp - w / 2 + (1.0_dp - w) / 2.0_dp * b)
+      a(3) = - c * (1.0_dp - w) / 2 * b
+    else
+      t = (x - xi(2)) / (xi(3) - xi(2))
+      c = 2.0_dp * t * (1.0_dp - t)
+      w = (xi(2) - xi(1)) / (xi(3) - xi(1))
+      b = (xi(3) - xi(2)) / (xi(2) - xi(1))
+      a(1) = -c * (1.0_dp - w) / 2.0_dp * b
+      a(2) = (1 - t)**2 + c * (1.0_dp - w / 2 + (1.0_dp - w) / 2.0_dp * b)
+      a(3) =  t**2 + c * w / 2
+    end if
+
+  end subroutine prepare_bezier
+
+  subroutine prepare_linear(xi, x, a)
+    implicit none
+
+    real(dp), dimension(3), intent(in) :: xi
+    real(dp), intent(in) :: x
+    real(kind=dp), intent(out), dimension(3) :: a
+
+    real(dp) :: t, c
+    
+    if (x > xi(1) .and. x < xi(2)) then
+      t = (x - xi(1)) / (xi(2) - xi(1))
+      c = t * (1.0_dp - t)
+      a(1) = (1.0_dp - t)**2 + c
+      a(2) = t**2 + c
+      a(3) = 0.0_dp
+    else
+      t = (x - xi(2)) / (xi(3) - xi(2))
+      c = t * (1.0_dp - t)
+      a(1) = 0.0_dp
+      a(2) = (1.0_dp - t)**2 + c
+      a(3) = t**2 + c
+    end if
+
+  end subroutine prepare_linear
+
+
   ! Perform Bezier interpolation
   subroutine Bezier_interp(xi, yi, ni, x, y)
     implicit none
@@ -108,7 +164,8 @@ contains
     real(dp), intent(in) :: x
     real(dp), intent(out) :: y
 
-    real(dp) :: xc, dx, dx1, dy, dy1, w, yc, t, wlim, wlim1
+    real(dp) :: dx, dx1, dy, dy1, w, wlim, wlim1
+    real(kind=dp), dimension(3) :: a
 
     !xc = (xi(1) + xi(2))/2.0_dp ! Control point (no needed here, implicitly included)
     dx = xi(2) - xi(1)
@@ -123,26 +180,55 @@ contains
       wlim = 1.0_dp + 1.0_dp/(1.0_dp - (dy1/dy) * (dx/dx1))
       wlim1 = 1.0_dp/(1.0_dp - (dy/dy1) * (dx1/dx))
       if (w <= min(wlim,wlim1) .or. w >= max(wlim,wlim1)) then
-        w = 1.0_dp
+        call prepare_linear(xi, x, a)
+      else 
+        call prepare_bezier(xi, x, a)
       end if
-      yc = yi(2) - dx/2.0_dp * (w*dy/dx + (1.0_dp - w)*dy1/dx1)
-      t = (x - xi(1))/dx
-      y = (1.0_dp - t)**2 * yi(1) + 2.0_dp*t*(1.0_dp - t)*yc + t**2*yi(2)
     else ! (x > xi(2) and x < xi(3)) then
       ! right hand side interpolation
       !print*,'right'
       w = dx/(dx + dx1)
       wlim = 1.0_dp/(1.0_dp - (dy1/dy) * (dx/dx1))
-      wlim1 = 1.0_dp + 1.0_dp/(1.0_dp - (dy/dy1) * (dx1/dx))
+      wlim1 = 1.0_dp + 1.0_dp/(1.0_dp - (dy/dy1) * (dx1/dx))      
       if (w <= min(wlim,wlim1) .or. w >= max(wlim,wlim1)) then
-        w = 1.0_dp
+        call prepare_linear(xi, x, a)
+      else 
+        call prepare_bezier(xi, x, a)
       end if
-      yc = yi(2) + dx1/2.0_dp * (w*dy1/dx1 + (1.0_dp - w)*dy/dx)
-      t = (x - xi(2))/(dx1)
-      y = (1.0_dp - t)**2 * yi(2) + 2.0_dp*t*(1.0_dp - t)*yc + t**2*yi(3)
     end if
+    y = a(1) * yi(1) + a(2) * yi(2) + a(3) * yi(3)
 
   end subroutine Bezier_interp
+
+  subroutine Bezier_interp_prepared(c_lin, c_bez, w, left, b1, b2, yi, y)
+    implicit none
+
+    real(dp), intent(in) :: w, b1, b2
+    logical, intent(in) :: left
+    real(dp), dimension(3), intent(in) :: c_lin, c_bez, yi
+    real(dp), intent(out) :: y
+
+    real(dp) :: dy, dy1, wlim, wlim1
+
+    !xc = (xi(1) + xi(2))/2.0_dp ! Control point (no needed here, implicitly included)
+    dy = yi(2) - yi(1)
+    dy1 = yi(3) - yi(2)
+
+    if (left .eqv. .True.) then
+      wlim = 1.0_dp + 1.0_dp/(1.0_dp - (dy1/dy) * b1)
+      wlim1 = 1.0_dp/(1.0_dp - (dy/dy1) * b2)
+    else
+      wlim = 1.0_dp/(1.0_dp - (dy1/dy) * b1)
+      wlim1 = 1.0_dp + 1.0_dp/(1.0_dp - (dy/dy1) * b2)
+    end if
+
+    if (w <= min(wlim,wlim1) .or. w >= max(wlim,wlim1)) then
+      y = c_lin(1) * yi(1) + c_lin(2) * yi(2) + c_lin(3) * yi(3)
+    else 
+      y = c_bez(1) * yi(1) + c_bez(2) * yi(2) + c_bez(3) * yi(3)
+    end if
+
+  end subroutine Bezier_interp_prepared
 
   pure subroutine locate(arr, var, idx)
     implicit none

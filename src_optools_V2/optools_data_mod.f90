@@ -87,6 +87,8 @@ module optools_data_mod
   real(kind=dp), allocatable, dimension(:,:) :: VMR_cl_lay
   real(kind=dp), allocatable, dimension(:,:) :: a_C_cl_lay
   real(kind=dp), allocatable, dimension(:,:,:) :: nd_C_cl_lay
+  integer, allocatable, dimension(:,:) :: iT1s, iP1s
+  type(Prepared_bezier_input), allocatable, dimension(:,:) :: Bezier_input_P, Bezier_input_T
 
   ! --- Global CK table data --- !
   type(CK_table), allocatable, dimension(:) :: CK_tab

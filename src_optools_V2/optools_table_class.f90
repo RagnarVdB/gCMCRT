@@ -75,6 +75,15 @@ module optools_table_class
 
   end type lbl_table
 
+
+  type Prepared_bezier_input
+  
+  real(kind=dp) :: w, b1, b2
+  logical :: left_side
+  real(kind=dp), dimension(3) :: coeff_linear, coeff_bezier
+
+  end type Prepared_bezier_input
+
   type CIA_table
 
     integer :: form          ! Table format - 1 = NEMESIS, 2 = Bell, 3 = SOCRATES, 4 = HITRAN (CIA)
