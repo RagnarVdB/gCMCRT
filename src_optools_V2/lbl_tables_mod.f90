@@ -87,6 +87,16 @@ contains
 
     ! Perform lbl table interpolation to layer T,p
     ! Species loops are inside subroutines
+
+    if (interp_wl .eqv. .False.) then
+      allocate(Bezier_input_P(nlay, nlbl))
+      allocate(Bezier_input_T(nlay, nlbl))
+      allocate(iT1s(nlay, nlbl))
+      allocate(iP1s(nlay, nlbl))
+      call prepare_interp_lbl_tables_Bezier()
+    end if
+
+
     do l = 1, nwl
       !$omp single
       if (mod(l,nwl/10) == 0) then
