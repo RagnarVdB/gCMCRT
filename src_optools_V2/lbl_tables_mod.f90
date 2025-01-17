@@ -79,15 +79,6 @@ contains
     print*, ' ~~ Performing lbl interpolation, combining and output ~~ '
     print*, ' ~~ Please wait... ~~ '
 
-    !! Begin openMP loops
-    !$omp parallel default (none), &
-    !$omp& private (l,z), &
-    !$omp& shared (nwl,wl,nlay,lbl_out,RH_lay,interp_wl), &
-    !$omp& firstprivate(lbl_work, lbl_comb)
-
-    ! Perform lbl table interpolation to layer T,p
-    ! Species loops are inside subroutines
-
     if (interp_wl .eqv. .False.) then
       allocate(Bezier_input_P(nlay, nlbl))
       allocate(Bezier_input_T(nlay, nlbl))
@@ -96,7 +87,14 @@ contains
       call prepare_interp_lbl_tables_Bezier()
     end if
 
+    !! Begin openMP loops
+    !$omp parallel default (none), &
+    !$omp& private (l,z), &
+    !$omp& shared (nwl,wl,nlay,lbl_out,RH_lay,interp_wl, iP1s, iT1s, Bezier_input_P, Bezier_input_T), &
+    !$omp& firstprivate(lbl_work, lbl_comb)
 
+    ! Perform lbl table interpolation to layer T,p
+    ! Species loops are inside subroutines
     do l = 1, nwl
       !$omp single
       if (mod(l,nwl/10) == 0) then
