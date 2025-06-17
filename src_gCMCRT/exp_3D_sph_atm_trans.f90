@@ -219,7 +219,7 @@ subroutine exp_3D_sph_atm_transmission()
   im_d = im
   grid_d = grid
 
-  allocate(T_trans(5, n_wl),T_trans_d(5, n_wl))
+  allocate(T_trans(181, n_wl),T_trans_d(181, n_wl))
 
   ! Grid for GPU threads/blocks
   threads = dim3(128,1,1)

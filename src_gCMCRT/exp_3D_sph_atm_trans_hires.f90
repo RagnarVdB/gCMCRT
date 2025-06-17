@@ -218,7 +218,7 @@ subroutine exp_3D_sph_atm_trans_hires()
   im_d = im
   grid_d = grid
 
-  allocate(T_trans(5, n_wl),T_trans_d(5, n_wl))
+  allocate(T_trans(181, n_wl),T_trans_d(181, n_wl))
 
   ! Grid for GPU threads/blocks
   threads = dim3(128,1,1)
@@ -304,7 +304,7 @@ subroutine exp_3D_sph_atm_trans_hires()
       T_trans(:, l) = T_trans_d(:, l)
 
       T_trans(:, l) = (H(grid%n_lev) - H(1)) / real(Nph,dp) * T_trans(:, l)
-      write(uT(n),'(F18.15, 5E22.15)') wl(l), T_trans(:, l)
+      write(uT(n),'(F18.15, 181E22.15)') wl(l), T_trans(:, l)
       !call flush(uT(n))
 
       print*, n, l, wl(l), T_trans(1, l)
