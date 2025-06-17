@@ -102,8 +102,8 @@ contains
 
     ! Reverse l index as table is in wavenumber order - convert wn to um
     do l = 1, lbl_tab(s)%nwl
-      lbl_tab(s)%wl(l) = wll(lbl_tab(s)%nwl-l+1)
-      lbl_tab(s)%wn(l) = wnn(lbl_tab(s)%nwl-l+1)
+      lbl_tab(s)%wl(l) = wll(l)
+      lbl_tab(s)%wn(l) = wnn(l)
     end do
 
     ! print*, lbl_tab(s)%nP, lbl_tab(s)%nT, lbl_tab(s)%nwl

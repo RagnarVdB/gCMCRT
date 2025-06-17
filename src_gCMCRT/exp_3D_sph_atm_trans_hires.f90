@@ -157,7 +157,7 @@ subroutine exp_3D_sph_atm_trans_hires()
 
   character (len=8) :: fmt
   character (len=3) :: n_str
-  integer :: Nph, l, iscat, istat, n
+  integer :: Nph, l, iscat, istat, n, s_wl
   integer, allocatable, dimension(:) :: uT
   integer, device :: l_d, Nph_d
   integer :: n_theta, n_phi, n_lay
@@ -167,7 +167,7 @@ subroutine exp_3D_sph_atm_trans_hires()
 
   type(dim3) :: blocks, threads
 
-  namelist /sph_3D_trans_hires/ Nph, n_wl, pl, pc, sc, n_theta, n_phi, viewthet, viewphi, n_lay, iscat
+  namelist /sph_3D_trans_hires/ Nph, s_wl, n_wl, pl, pc, sc, n_theta, n_phi, viewthet, viewphi, n_lay, iscat
 
   allocate(uT(n_phase),viewphi(n_phase))
 
@@ -236,12 +236,12 @@ subroutine exp_3D_sph_atm_trans_hires()
 
 
   if (doppler_on .eqv. .True.) then
-    call read_next_opac_doppler(1)
+    call read_next_opac_doppler(s_wl)
   else
-    call read_next_opac(1)
+    call read_next_opac(s_wl)
   end if
 
-  do l = 1, n_wl
+  do l = s_wl, n_wl
 
     !if (l < 71177) then
     !  if (doppler_on .eqv. .True.) then

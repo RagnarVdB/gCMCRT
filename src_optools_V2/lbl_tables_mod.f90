@@ -3,6 +3,7 @@ module lbl_tables_mod
   use lbl_tables_read
   use lbl_tables_interp
   use lbl_tables_combine
+  use optools_aux, only : locate
   implicit none
 
   logical :: first_call = .True.
@@ -27,7 +28,7 @@ contains
   subroutine calc_lbl_table()
     implicit none
 
-    integer :: s, j, l, z
+    integer :: s, j, l, z, l_first
     logical :: exists
     real(kind=dp), allocatable, dimension(:) :: lbl_work
     real(kind=dp) :: lbl_comb
@@ -86,11 +87,15 @@ contains
       allocate(iP1s(nlay, nlbl))
       call prepare_interp_lbl_tables_Bezier()
     end if
+    ! For the case that interp_wl == False
+
+    call locate(lbl_tab(1)%wl, wl(1), l_first)
+    print *, 'located', wl(1), lbl_tab(1)%wl(l_first+1)
 
     !! Begin openMP loops
     !$omp parallel default (none), &
     !$omp& private (l,z), &
-    !$omp& shared (nwl,wl,nlay,lbl_out,RH_lay,interp_wl, iP1s, iT1s, Bezier_input_P, Bezier_input_T), &
+    !$omp& shared (nwl,wl,nlay,lbl_out,RH_lay,interp_wl, iP1s, iT1s, Bezier_input_P, Bezier_input_T, l_first), &
     !$omp& firstprivate(lbl_work, lbl_comb)
 
     ! Perform lbl table interpolation to layer T,p
@@ -108,7 +113,7 @@ contains
         if (interp_wl .eqv. .True.) then
            call interp_lbl_tables(l,z,lbl_work(:))
         else
-          call interp_lbl_tables_Bezier(l,z,lbl_work(:))
+          call interp_lbl_tables_Bezier(l + l_first,z,lbl_work(:))
         end if
 
         ! Combine interpolated lbl opacity for each species with VMR of species
