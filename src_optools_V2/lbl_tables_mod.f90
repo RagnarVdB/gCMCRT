@@ -7,18 +7,17 @@ module lbl_tables_mod
 
   logical :: first_call = .True.
 
-  real(kind=dp), allocatable, dimension(:) :: lbl_out
+  real(kind=dp), allocatable, dimension(:, :) :: lbl_out
   real(kind=sp), allocatable, dimension(:) :: lbl_write
 
   ! Namelist options
-  integer :: iopts
+  integer :: iopts, reclen
   integer, allocatable, dimension(:) :: form
   character(len=150), allocatable, dimension(:) :: paths
   logical :: interp_wl
 
   namelist /lbl_nml/ iopts, form, paths, interp_wl
 
-  private :: output_lbl_table
   public :: calc_lbl_table
 
 
@@ -44,7 +43,7 @@ contains
     read(u_nml, nml=lbl_nml)
 
     ! Allocate work arrays
-    allocate(lbl_out(nlay),lbl_write(nlay))
+    allocate(lbl_out(nwl, nlay),lbl_write(nlay))
 
     ! Allocate private work arrays and initialise
     allocate(lbl_work(nlbl))
@@ -95,15 +94,13 @@ contains
 
     ! Perform lbl table interpolation to layer T,p
     ! Species loops are inside subroutines
+    !$omp do schedule (dynamic)
     do l = 1, nwl
-      !$omp single
       if (mod(l,nwl/10) == 0) then
         print*, l, wl(l), nwl
       end if
-      !$omp end single
-      !$omp do schedule (dynamic)
-      do z = 1, nlay
 
+      do z = 1, nlay
         ! Find the lbl opacity for this layer from tables
         if (interp_wl .eqv. .True.) then
            call interp_lbl_tables(l,z,lbl_work(:))
@@ -115,18 +112,22 @@ contains
         call combine_lbl_opacity(z,lbl_work(:),lbl_comb)
 
         ! Convert interpolated result to cm2 g-1 of atmosphere and add to output array
-        lbl_out(z) = lbl_comb/RH_lay(z)
+        lbl_out(l, z) = lbl_comb/RH_lay(z)
 
       end do
-      !$omp end do
-
-      !$omp single
-      ! Output CMCRT formatted lbl table for layers
-      call output_lbl_table(l)
-      !$omp end single
-
     end do
+    !$omp end do
     !$omp end parallel
+
+    print*, 'Writing lbl table to file...'
+    inquire(iolength=reclen) real(max(lbl_out(1, :),1.0e-30_dp),kind=sp)
+    ! Output lbl-table in 1D flattened 3D CMCRT format lbl.cmcrt (single precision)
+    open(newunit=ulbl, file='lbl.cmcrt', action='readwrite', &
+      & form='unformatted',status='replace',access='direct',recl=reclen)
+    do l=1, nwl
+      lbl_write(:) = real(max(lbl_out(l, :),1.0e-30_dp),kind=sp)
+      write(ulbl,rec=l) lbl_write
+    end do
 
     print*, ' ~~ Quest completed ~~ '
 
@@ -140,26 +141,5 @@ contains
     close(ulbl_for)
 
   end subroutine calc_lbl_table
-
-
-  subroutine output_lbl_table(l)
-    implicit none
-
-    integer, intent(in) :: l
-    integer :: z, reclen
-
-    if (first_call .eqv. .True.) then
-      inquire(iolength=reclen) lbl_write
-      ! Output lbl-table in 1D flattened 3D CMCRT format lbl.cmcrt (single precision)
-      open(newunit=ulbl, file='lbl.cmcrt', action='readwrite', &
-      & form='unformatted',status='replace',access='direct',recl=reclen)
-      first_call = .False.
-    end if
-
-    ! Convert to single precision on output, also care for underfloat
-    lbl_write(:) = real(max(lbl_out(:),1.0e-30_dp),kind=sp)
-    write(ulbl,rec=l) lbl_write
-
-  end subroutine output_lbl_table
 
 end module lbl_tables_mod
