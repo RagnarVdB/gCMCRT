@@ -29,7 +29,7 @@ contains
   subroutine calc_CIA_table()
     implicit none
 
-    integer :: s, i, j, l, z, ni, dummy
+    integer :: s, i, j, l, z, ni
     logical :: exists
 
     !Note, the order the array allocations is important
