@@ -18,12 +18,11 @@ contains
 
     integer, intent(in) :: z
     real(kind=dp), dimension(1), intent(out) :: CIA_work
-    integer :: s, sn, j
+    integer :: s, sn, j, l
     integer :: iwn, iwn1, iT, iT1
     real(kind=dp) :: xval, yval, x0, x1, y0, y1, a00, a10, a01, a11, aval, lTGz
     real(kind=dp) :: CIA_spec
-    integer l
-    
+
     do l = 1, nwl
       CIA_work(l) = 0.0_dp
     end do
@@ -80,41 +79,16 @@ contains
         cycle
       end if
         
-      ! sn = 0
-      ! if (CIA_tab(s)%nset > 1) then
-      !   do j = 1, CIA_tab(s)%nset
-      !     if (wn(l) > CIA_tab(s)%wn_s(j) .and. wn(l) < CIA_tab(s)%wn_e(j)) then
-      !       if (TG_lay(z) > CIA_tab(s)%Tmin(j) .and. TG_lay(z) < CIA_tab(s)%Tmax(j)) then
-      !         sn = j
-      !         exit
-      !       end if
-      !     end if
-      !   end do
-      
-      !   if (sn == 0) then
-      
-      !     do j = 1, CIA_tab(s)%nset
-      !       if (wn(l) > CIA_tab(s)%wn_s(j) .and. wn(l) < CIA_tab(s)%wn_e(j)) then
-      !         if (TG_lay(z) < CIA_tab(s)%Tmin(j)) then
-      !           sn = j
-      !           exit
-      !         end if
-      !         if (TG_lay(z) > CIA_tab(s)%Tmax(j)) then
-      !           sn = j
-      !           exit
-      !         end if
-      !       end if
-      !     end do
-      
-      !     if (sn == 0) then
-      !       cycle
-      !     end if
-      
-      !   end if
-      
-      ! else
-      ! sn = 1
-      ! end if
+      sn = 0
+      if (CIA_tab(s)%nset > 1) then
+        print*, 'Error: this version does not support multiple sets of CIA tables'
+        print*, 'Species: ', CIA_tab(s)%sp, CIA_tab(s)%form
+        stop
+      else
+      sn = 1
+      end if
+
+
       sn = 1
       
       ! Locate required T indexes in CIA wn array for layer temperature
@@ -126,11 +100,6 @@ contains
         ! Prelocated wn indexes in CIA wn array
         iwn = iwns(s, l)
         iwn1 = iwn + 1
-
-        ! iwn = 1
-        ! do while (CIA_tab(s)%wn(sn,iwn) < wn(l) .and. iwn < CIA_tab(s)%irec(sn))
-        !   iwn = iwn + 1
-        ! end do
 
 
         ! Check in wavenumber within bounds
@@ -144,12 +113,14 @@ contains
           ! Temperature of layer is outside lower bounds of table
           !print*, 'CIA: TG_lay < minval(T) @: ', CIA_tab(s)%sp, z, TG_lay(z), minval(CIA_tab(s)%T(:)), 'Assuming = minval(T)'
 
+          ! Use precalculated log values to interpolate in log space
           ! Perform wn linear interp to minval(T)
           xval = lwn(l) ; x0 = CIA_tab(s)%lwn(sn,iwn) ; x1 = CIA_tab(s)%lwn(sn,iwn1)
           y0 = CIA_tab(s)%ltab(sn,iwn,1) ; y1 = CIA_tab(s)%ltab(sn,iwn1,1)
 
           ! Perform log linear interpolation
           call linear_interp(xval, x0, x1, y0, y1, yval)
+          ! Back to linear
           yval = 10.0_dp**(yval)
 
           ! Check for NaN's from interpolation
@@ -190,17 +161,12 @@ contains
         else
 
           !! wn and T are within the table bounds
-          ! xval = wn(l) ; x0 = CIA_tab(s)%wn(sn,iwn) ; x1 = CIA_tab(s)%wn(sn,iwn1)
-          ! yval = TG_lay(z) ; y0 = CIA_tab(s)%T(sn,iT) ; y1 = CIA_tab(s)%T(sn,iT1)
           xval = lwn(l) ; x0 = CIA_tab(s)%lwn(sn,iwn) ; x1 = CIA_tab(s)%lwn(sn,iwn1)
           yval = lTGz ; y0 = CIA_tab(s)%lT(sn,iT) ; y1 = CIA_tab(s)%lT(sn,iT1)
-          ! a00 = CIA_tab(s)%tab(sn,iwn,iT) ; a10 = CIA_tab(s)%tab(sn,iwn1,iT)
-          ! a01 = CIA_tab(s)%tab(sn,iwn,iT1) ; a11 = CIA_tab(s)%tab(sn,iwn1,iT1)
           a00 = CIA_tab(s)%ltab(sn,iwn,iT) ; a10 = CIA_tab(s)%ltab(sn,iwn1,iT)
           a01 = CIA_tab(s)%ltab(sn,iwn,iT1) ; a11 = CIA_tab(s)%ltab(sn,iwn1,iT1)
 
           ! Perform bi-linear interpolation
-          ! call bilinear_log_interp(xval, yval, x0, x1, y0, y1, a00, a10, a01, a11, aval)
           call bilinear_interp(xval, yval, x0, x1, y0, y1, a00, a10, a01, a11, aval)
           aval = 10.0_dp**(aval)
           ! Check for NaN's from bi-linear interpolation
