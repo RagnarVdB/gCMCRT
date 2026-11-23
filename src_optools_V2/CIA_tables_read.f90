@@ -106,7 +106,7 @@ contains
     rewind(u)
 
     mnrec = maxval(CIA_tab(s)%irec(:))
-    allocate(CIA_tab(s)%wn(CIA_tab(s)%nset,mnrec))
+    allocate(CIA_tab(s)%wn(CIA_tab(s)%nset,mnrec), CIA_tab(s)%lwn(CIA_tab(s)%nset,mnrec))
     allocate(CIA_tab(s)%tab(CIA_tab(s)%nset,mnrec,mnT),CIA_tab(s)%ltab(CIA_tab(s)%nset,mnrec,mnT))
 
     ! Read and allocate data until error (end of file)
@@ -116,6 +116,7 @@ contains
         ! Read the record data
         do i = 1, CIA_tab(s)%irec(j)
           read(u,*) CIA_tab(s)%wn(j,i), CIA_tab(s)%tab(j,i,n)
+          CIA_tab(s)%lwn(j,i) = log10(CIA_tab(s)%wn(j,i))
           CIA_tab(s)%tab(j,i,n) = max(abs(CIA_tab(s)%tab(j,i,n)),1e-99_dp) 
           CIA_tab(s)%ltab(j,i,n) = log10(CIA_tab(s)%tab(j,i,n))
           !print*, i, CIA_tab(s)%wn(j,i), CIA_tab(s)%tab(j,i,n)
@@ -148,10 +149,11 @@ contains
 
     allocate(CIA_tab(s)%wl(1,CIA_tab(s)%nwl))
     allocate(CIA_tab(s)%wn(1,CIA_tab(s)%nwl))
-    allocate(CIA_tab(s)%T(1,CIA_tab(s)%nT(1)))
+    allocate(CIA_tab(s)%T(1,CIA_tab(s)%nT(1)), CIA_tab(s)%lT(1,CIA_tab(s)%nT(1)))
     allocate(CIA_tab(s)%tab(1,CIA_tab(s)%nwl,CIA_tab(s)%nT(1)))
 
     read(u,*) CIA_tab(s)%T(1,:)
+    CIA_tab(s)%lT(1,:) = log10(CIA_tab(s)%T(1,:))
 
     do n = 1, CIA_tab(s)%nwl
       read(u,*) CIA_tab(s)%wl(1,n), CIA_tab(s)%tab(1,n,:)

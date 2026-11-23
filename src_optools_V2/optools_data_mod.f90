@@ -70,8 +70,9 @@ module optools_data_mod
   integer :: nwl
   integer, allocatable, dimension(:) :: iwl
   real(kind=dp), allocatable, dimension(:) :: wl, wl_cm, wl_A ! Wavelength [um, cm, A]
-  real(kind=dp), allocatable, dimension(:) :: wn ! Wavenumber [cm-1]
+  real(kind=dp), allocatable, dimension(:) :: wn, lwn ! Wavenumber [cm-1]
   real(kind=dp), allocatable, dimension(:) :: freq ! Frequency [Hz]
+  integer, allocatable, dimension(:,:) :: iwns
 
   !--------------- 1D grid arrays---------------------
   integer :: nlay, ngas, ndust, nmode
@@ -86,6 +87,8 @@ module optools_data_mod
   real(kind=dp), allocatable, dimension(:,:) :: VMR_cl_lay
   real(kind=dp), allocatable, dimension(:,:) :: a_C_cl_lay
   real(kind=dp), allocatable, dimension(:,:,:) :: nd_C_cl_lay
+  integer, allocatable, dimension(:,:) :: iT1s, iP1s
+  type(Prepared_bezier_input), allocatable, dimension(:,:) :: Bezier_input_P, Bezier_input_T
 
   ! --- Global CK table data --- !
   type(CK_table), allocatable, dimension(:) :: CK_tab
