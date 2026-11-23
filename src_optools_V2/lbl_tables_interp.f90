@@ -305,7 +305,8 @@ contains
           lka(1) = lbl_tab(s)%lk_abs(l,iP1,lbl_tab(s)%nT)
           lka(2) = lbl_tab(s)%lk_abs(l,iP2,lbl_tab(s)%nT)
           lka(3) = lbl_tab(s)%lk_abs(l,iP3,lbl_tab(s)%nT)
-          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lbl_work(s))
+          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, &
+          Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lbl_work(s))
           lbl_work(s) = 10.0_dp**lbl_work(s)
         end if
       else if (T <= lbl_tab(s)%T(1)) then
@@ -321,7 +322,8 @@ contains
           lka(1) = lbl_tab(s)%lk_abs(l,iP1,1)
           lka(2) = lbl_tab(s)%lk_abs(l,iP2,1)
           lka(3) = lbl_tab(s)%lk_abs(l,iP3,1)
-          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lbl_work(s))
+          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, &
+          Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lbl_work(s))
           lbl_work(s) = 10.0_dp**lbl_work(s)
         end if
       else
@@ -331,30 +333,36 @@ contains
           lka(1) = lbl_tab(s)%lk_abs(l,lbl_tab(s)%nP,iT1)
           lka(2) = lbl_tab(s)%lk_abs(l,lbl_tab(s)%nP,iT2)
           lka(3) = lbl_tab(s)%lk_abs(l,lbl_tab(s)%nP,iT3)
-          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka(:),lbl_work(s))
+          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, &
+          Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka(:),lbl_work(s))
           lbl_work(s) = 10.0_dp**lbl_work(s)
         else if (P <= lbl_tab(s)%P(1)) then
           ! Pressure is too low, outside table range - use lowest availible P
           lka(1) = lbl_tab(s)%lk_abs(l,1,iT1)
           lka(2) = lbl_tab(s)%lk_abs(l,1,iT2)
           lka(3) = lbl_tab(s)%lk_abs(l,1,IT3)
-          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka(:),lbl_work(s))
+          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, &
+          Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka(:),lbl_work(s))
           lbl_work(s) = 10.0_dp**lbl_work(s)
         else
           ! Both pressure and temperature are within table bounds, perform Bezier interpolation 4 times
           lka(1) = lbl_tab(s)%lk_abs(l,iP1,iT1)
           lka(2) = lbl_tab(s)%lk_abs(l,iP2,iT1)
           lka(3) = lbl_tab(s)%lk_abs(l,iP3,iT1)
-          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(1)) ! Result at T1, P_in
+          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, &
+          Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(1)) ! Result at T1, P_in
           lka(1) = lbl_tab(s)%lk_abs(l,iP1,iT2)
           lka(2) = lbl_tab(s)%lk_abs(l,iP2,iT2)
           lka(3) = lbl_tab(s)%lk_abs(l,iP3,iT3)
-          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(2)) ! Result at T2, P_in
+          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, &
+          Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(2)) ! Result at T2, P_in
           lka(1) = lbl_tab(s)%lk_abs(l,iP1,iT3)
           lka(2) = lbl_tab(s)%lk_abs(l,iP2,iT3)
           lka(3) = lbl_tab(s)%lk_abs(l,iP3,iT3)
-          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(3)) ! Result at T3, P_in
-          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka_lbl(:), lbl_work(s)) ! Result at T_in, P_in
+          call Bezier_interp_prepared(Bezier_input_P(z,s)%coeff_linear, Bezier_input_P(z,s)%coeff_bezier, Bezier_input_P(z,s)%w, &
+          Bezier_input_P(z,s)%left_side, Bezier_input_P(z,s)%b1, Bezier_input_P(z,s)%b2, lka(:), lka_lbl(3)) ! Result at T3, P_in
+          call Bezier_interp_prepared(Bezier_input_T(z,s)%coeff_linear, Bezier_input_T(z,s)%coeff_bezier, Bezier_input_T(z,s)%w, &
+          Bezier_input_T(z,s)%left_side, Bezier_input_T(z,s)%b1, Bezier_input_T(z,s)%b2, lka_lbl(:), lbl_work(s)) ! Result at T_in, P_in
           lbl_work(s) = 10.0_dp**lbl_work(s)
         end if
       end if
